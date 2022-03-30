@@ -1,0 +1,89 @@
+apply from: "../../component_config/lib_config/version.gradle"
+
+//主工程模块名
+final String mainModuleName = "app"
+//当前模块名
+String moduleName = project.name
+//当前模块是否为主工程
+boolean isMainModule = moduleName == mainModuleName
+
+/**
+ ********** 以下为各个组件的build.gradle通用配置***********
+ */
+
+if (isMainModule) {
+    //是否混淆
+    ext.isProguard = gradle.enable_proguard
+
+    apply plugin: 'com.android.application'
+    //todo生命周期相关组件
+//    apply plugin: 'com.hm.plugin.lifecycle'//Android-AppLifecycleMgr注册组件生命周期的初始化
+
+} else {
+    apply plugin: 'com.android.library'
+}
+
+//设置所有模块均使用kotlin
+if (true) {
+    apply plugin: 'kotlin-android'
+    apply plugin: 'kotlin-parcelize'
+    apply plugin: 'kotlin-kapt'
+
+    //ARouter
+    kapt {
+        arguments { arg("AROUTER_MODULE_NAME", project.getName()) }
+    }
+    project.android {
+        kotlinOptions { jvmTarget = "1.8" }
+    }
+}
+
+project.android {
+    compileSdkVersion android.compileSdkVersion
+    defaultConfig {
+        targetSdkVersion android.targetSdkVersion
+        minSdkVersion android.minSdkVersion
+        versionCode android.versionCode
+        versionName android.versionName
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        ndk {abiFilters 'armeabi-v7a'}
+        javaCompileOptions {
+            annotationProcessorOptions { arguments = [AROUTER_MODULE_NAME: project.getName()] }
+        }
+    }
+
+    //jdk1.8
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    buildFeatures { dataBinding = true }
+
+    //避免编译报错
+    packagingOptions {
+        pickFirst 'lib/arm64-v8a/libsqlite.so'
+        pickFirst 'lib/armeabi-v7a/libsqlite.so'
+        pickFirst 'lib/armeabi/libsqlite.so'
+        pickFirst 'lib/x86/libsqlite.so'
+        pickFirst 'lib/x86_64/libsqlite.so'
+        doNotStrip '*/mips/*.so'
+        doNotStrip '*/mips64/*.so'
+        doNotStrip "**/libDX*.so"
+    }
+
+    lintOptions {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+    signingConfigs {
+        release {
+            keyAlias sign.keyAlias
+            keyPassword sign.keyPassword
+            storeFile sign.storeFile
+            storePassword sign.storePassword
+        }
+        debug { initWith release }
+    }
+
+}
