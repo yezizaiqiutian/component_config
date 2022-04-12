@@ -9,9 +9,9 @@
 <configs>
     <project>
         <!--aar:使用aar，include:组件参与编译，project:组件名-->
-        <component aar="true" include="true" project="module_main" />
-        <component aar="true" include="true" project="module_login" />
-        <component aar="true" include="true" project="module_luckydraw" />
+        <component aar="false" include="true" project="module_main" />
+        <component aar="false" include="true" project="module_login" />
+        <component aar="false" include="true" project="module_luckydraw" />
 
         <component aar="false" include="true" project="module_demo" />
 
@@ -22,7 +22,9 @@
         <!--编译混淆开关-->
         <enable_proguard>false</enable_proguard>
         <!--全部使用源码-->
-        <all_sourcecode>true</all_sourcecode>
+        <all_sourcecode>false</all_sourcecode>
+        <!--引入其他库源码-->
+        <import_other_project>true</import_other_project>
     </buildOptions>
 
 </configs>

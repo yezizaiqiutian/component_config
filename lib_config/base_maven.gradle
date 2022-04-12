@@ -1,0 +1,92 @@
+apply plugin: 'maven-publish'
+apply from: "../../component_config/lib_config/version.gradle"
+
+//定义aar版本号的额外属性，需在build.gradle中赋值。
+ext.aarVersionName = ""
+
+//还不了解Maven-publish的module工作方式，暂时禁用。
+tasks.withType(GenerateModuleMetadata) {
+    enabled = false
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            "[${project.name}]"(MavenPublication) {
+                from components.release// buildTypes的名字
+                groupId = mavenSign.MAVEN_GROUPID//组名
+                artifactId = project.name// 当前项目的名字
+                version = aarVersionName = getAarVersion(aarVersionName)
+                // 上传source，这样使用者可以看到方法注释
+                artifact generateSourcesJar
+            }
+        }
+        repositories {
+            maven {
+                // 可以有且仅有一个仓库不指定 name 属性，会隐式设置为 Maven
+                // 根据libVersionName判断仓库地址
+                url = isSnapshot(getAarVersion(aarVersionName)) ? mavenSign.MAVEN_SNAPSHOT_URL : mavenSign.MAVEN_RELEASE_URL
+                name = "[Remote]"
+                // 仓库用户名密码
+                credentials {
+                    username = mavenSign.MAVEN_READONLY_USER
+                    password = mavenSign.MAVEN_READONLY_PASSWORD
+                }
+            }
+        }
+    }
+
+    task publishAar(group: 'aar') {
+        dependsOn getTasksByName("publish[${project.name}]PublicationTo[Remote]Repository", false)[0]
+        doLast {
+            println "--------------------------------------------"
+            println "${project.name} aar上传成功"
+            println "版本号：" + aarVersionName
+            println "--------------------------------------------"
+        }
+    }
+}
+
+def isSnapshot(String aarVersionName) {
+    boolean snapshot = false
+    if (aarVersionName.toLowerCase().contains('snapshot')
+            || aarVersionName.toLowerCase().contains('debug')
+            || aarVersionName.toLowerCase().endsWith('dev'))
+        snapshot = true
+    return snapshot
+}
+
+def getAarVersion(String aarVersionName) {
+    // 原则上不允许本地编译允许本地上传release aar，
+    // 但修改此值为true后也允许上传release aar，修改后记得及时改为false。
+    // 但也只是针对指定了版本号的情况(build.gradle的aarVersionName不能为空)。
+    // 为了正式版的稳定，尽量不要使用本地上传正式包。
+    def allowManualPublishReleaseAar = false
+    def version
+    if (aarVersionName == null || aarVersionName.isBlank()) {
+        //为空，自动生成版本号
+        version = new Date().format("yy.MMdd.HHmm.ss") + "-SNAPSHOT"
+    } else {
+        //使用build.gradle中定义的版本号，并追加-SNAPSHOT后缀
+        if (!allowManualPublishReleaseAar && !isSnapshot(aarVersionName)) {
+            aarVersionName
+        }
+        version = aarVersionName
+    }
+    return version
+}
+
+task generateSourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier 'sources'
+}
+
+ext.getParentAarVersion = { String name ->
+    try {
+        return project(":${name}").aarVersionName
+    } catch (ignore) {
+        return null
+    }
+
+}
+

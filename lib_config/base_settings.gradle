@@ -1,9 +1,9 @@
 import groovy.util.slurpersupport.GPathResult
 
 //统一工程名，不使用根目录名。
-rootProject.name = "gh_android"
+rootProject.name = "component_app"
 
-println("--ggggg--$rootDir.absolutePath")
+def aar_title = "com.gh.android"
 
 //初始化各个组件配置信息
 def configFile = new File("/Users/gh/Desktop/android/android_projects/Component/component_config/lib_config/components_configs.xml")
@@ -51,6 +51,12 @@ gradle.ext.assembleType = assembleType
 gradle.ext.allComponents = allComponentConfigXml.component
 //是否编译混淆
 gradle.ext.enable_proguard = componentConfigXml?.buildOptions?.enable_proguard != "false"
+//是否引入其他库源码
+gradle.ext.import_other_project = componentConfigXml?.buildOptions?.import_other_project != "false"
+//如果是构建aar,强制使用引入其他库源码
+if (gradle.assembleType == 2) {
+    gradle.import_other_project = true
+}
 
 //以version配置文件为主,下面两个方法为把version完善
 //components_version.xml中使用父组件的aarVersion填充子组件的aarVersion，方便后续数据的使用。
@@ -98,7 +104,7 @@ switch (gradle.assembleType) {
             def aar = component.@aar.text()
             if (include == "false") return
             if (aar != "false") {
-                println("--构建$componentName:使用aar--$rootProject.name:$componentName:$aarVersion")
+                println("--构建$componentName:使用aar--$aar_title:$componentName:$aarVersion")
             } else {
                 println("--构建$componentName:使用源码--:$componentName")
             }
@@ -118,11 +124,19 @@ if (gradle.assembleType != 2) {
     } else {
         println("--混淆:关闭--")
     }
+    if (gradle.import_other_project) {
+        println("--引入其他库源码:开启--")
+    } else {
+        println("--引入其他库源码:关闭--")
+    }
+
+
 }
 println("--base-setting.gradle------------------------------------------")
 
 //定义全局替换规则
 gradle.allprojects { subProject ->
+
     if (subProject == subProject.rootProject && gradle.assembleType == 2) {
         afterEvaluate {
             //处理构建aar时的联动依赖,相互关联的库:lib_core,lib_common
@@ -131,6 +145,7 @@ gradle.allprojects { subProject ->
                 if (component.name() == "dependency") {
                     def parentProjectName = component.parent().@project.text()
                     def projectName = component.@project.text()
+
                     project(":${parentProjectName}").getTasksByName("publishAar", false)[0].dependsOn project(":${projectName}").getTasksByName("publishAar", false)
                 }
             }
@@ -141,9 +156,9 @@ gradle.allprojects { subProject ->
 //    subProject.configurations.all {
 //        resolutionStrategy {
 //            dependencySubstitution {
-//                //println("--ggggggg--$rootProject.name:lib_component")
+//                //println("--ggggggg--$aar_title:lib_component")
 //                //gh_android:lib_component
-//                substitute module("$rootProject.name:lib_component") using project(":lib_component")
+//                substitute module("$aar_title:lib_component") using project(":lib_component")
 //            }
 //        }
 //    }
@@ -157,7 +172,7 @@ gradle.allprojects { subProject ->
                         if (component.name() != "component" && component.name() != "dependency") return
                         def componentName = component.@project.text()
                         //构建aar，全部使用源码
-                        substitute module("$rootProject.name:$componentName") using project(":$componentName")
+                        substitute module("$aar_title:$componentName") using project(":$componentName")
                     }
                 }
             }
@@ -172,8 +187,8 @@ gradle.allprojects { subProject ->
                 if (component.name() != "component" && component.name() != "dependency") return
                 if ((component.name() == "component" || component.name() == "dependency")
                         && component.@project.text() != null && component.@include == "false") {
-                    implementation { exclude group: "$rootProject.name", module: component.@project.text() }
-                    implementation { exclude group: rootProject.name, module: component.@project.text() }
+                    implementation { exclude group: "$aar_title", module: component.@project.text() }
+                    implementation { exclude group: aar_title, module: component.@project.text() }
                 }
             }
         }
@@ -188,11 +203,9 @@ gradle.allprojects { subProject ->
                         def aar = component.@aar.text()
                         if (include == "false") return
                         if (aar != "false") {
-                            substitute module("$rootProject.name:$componentName") using module("$rootProject.name:$componentName:$aarVersion")
+                            substitute module("$aar_title:$componentName") using module("$aar_title:$componentName:$aarVersion")
                         } else {
-                            println("--ggggg--$rootProject.name:$componentName")
-                            println("--ggggg--:$componentName")
-                            substitute module("$rootProject.name:$componentName") using project(":$componentName")
+                            substitute module("$aar_title:$componentName") using project(":$componentName")
                         }
                     }
                 }
@@ -211,28 +224,32 @@ def isPublishAar() {
     return false
 }
 
+//app和lib_component始终include
+include ':app'
+include ':lib_component'
+
+include ':lib_config'
+project(':lib_config').projectDir = "../component_config/lib_config" as File
+
 if (gradle.assembleType == 0) {
     //本地构建apk，根据components_configs配置include组件
     gradle.allComponents.depthFirst().each { component ->
         if (component.name() != "component" && component.name() != "dependency") return
 
         if (component.@include == "false") {
-            println "${component.@project}：不参与编译"
+//            println "${component.@project}：不参与编译"
         }
         if (component.@include != "false" && component.@aar != "false") {
-            println "${component.@project}：使用aar"
+//            println "${component.@project}：使用aar"
         }
         if (component.@include != "false" && component.@aar == "false") {
             include ":${component.@project}"
-            println "${component.@project}：使用源码"
+//            println "${component.@project}：使用源码"
+            incloudProject(component)
         }
 
-        println("ggggg include ${component.@project}")
-        println("ggggg include ${component.@project.name()}")
-        println("ggggg include ${component.@project.text()}")
-        def includeName = component.@project.text().split("_")[1]
-        println("ggggg include $includeName")
-        project(":lib_$includeName").projectDir = "../component_$includeName/lib_$includeName" as File
+//        incloudProject(component)
+
     }
 } else {
     //构建aar或Jenkins构建apk，所有组件都include
@@ -240,5 +257,16 @@ if (gradle.assembleType == 0) {
         if (component.name() != "component" && component.name() != "dependency") return
         include ":${component.@project}"
 
+        incloudProject(component)
+
+    }
+}
+
+//把所有的包都导入到项目中,是否引用看各个module配置
+def incloudProject(def component) {
+    if (gradle.import_other_project) {
+        def includedesp = component.@project.text().split("_")[0]
+        def includeName = component.@project.text().split("_")[1]
+        project(":${includedesp}_$includeName").projectDir = "../component_$includeName/${includedesp}_$includeName" as File
     }
 }

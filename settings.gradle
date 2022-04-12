@@ -1,4 +1,2 @@
-apply from: 'lib_config/base_settings.gradle'
-
 rootProject.name = "component_config"
 include ':app'
