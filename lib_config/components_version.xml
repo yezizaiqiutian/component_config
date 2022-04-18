@@ -1,7 +1,9 @@
-<project componentCount="3">
+<project componentCount="5">
     <!--<component aarVersion="0.0.1" project="module_main"/>-->
-    <component aarVersion="0.0.1" project="module_login"/>
-    <component aarVersion="0.0.2-SNAPSHOT" project="lib_common">
+    <component aarVersion="0.0.1-SNAPSHOT" project="module_login"/>
+    <component aarVersion="0.0.1-SNAPSHOT" project="module_main"/>
+    <component aarVersion="0.0.1-SNAPSHOT" project="lib_router"/>
+    <component aarVersion="0.0.1-SNAPSHOT" project="lib_common">
         <dependency project="lib_core"/>
     </component>
 </project>

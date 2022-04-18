@@ -19,11 +19,14 @@ ext {
     ]
 
     mavenSign = [
+//            MAVEN_READONLY_USER    : "6021f4ee95a53539a7a84b60",
             MAVEN_READONLY_USER    : "6021f4ee95a53539a7a84b60",
-            MAVEN_READONLY_PASSWORD: "I42hDNqks5HK",
-            MAVEN_GROUPID          : "com.gh.ghandroidproject",
-            MAVEN_RELEASE_URL      : "https://packages.aliyun.com/maven/repository/2104719-release-Z5yfmO/",
-            MAVEN_SNAPSHOT_URL     : "https://packages.aliyun.com/maven/repository/2104719-snapshot-wHkpKd/",
+            MAVEN_READONLY_PASSWORD: "LRH_NCLzvFWK",
+            MAVEN_GROUPID          : "com.gh.android",
+//            MAVEN_RELEASE_URL      : "https://packages.aliyun.com/maven/repository/2104719-release-Z5yfmO/",
+            MAVEN_RELEASE_URL      : "https://packages.aliyun.com/maven/repository/2216725-release-WqasL1/",
+//            MAVEN_SNAPSHOT_URL     : "https://packages.aliyun.com/maven/repository/2104719-snapshot-wHkpKd/",
+            MAVEN_SNAPSHOT_URL     : "https://packages.aliyun.com/maven/repository/2216725-snapshot-6XWSOw/",
 
     ]
 

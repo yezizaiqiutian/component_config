@@ -3,6 +3,10 @@ apply from: "../../component_config/lib_config/version.gradle"
 
 //定义aar版本号的额外属性，需在build.gradle中赋值。
 ext.aarVersionName = ""
+//为了省事,可以同时上传所有库的aar,实际场景应该不需要,如果allversion为0.0.0则不用上传所有功能
+ext.aarDefaultVersionName = "0.0.0"
+ext.aarAllVersionName = "0.0.0"
+//ext.aarAllVersionName = "0.0.1-SNAPSHOT" //发布提测包(用于测试的aar版本)
 
 //还不了解Maven-publish的module工作方式，暂时禁用。
 tasks.withType(GenerateModuleMetadata) {
@@ -10,8 +14,15 @@ tasks.withType(GenerateModuleMetadata) {
 }
 
 afterEvaluate {
+//    println("ggggg------aarVersionName:$aarVersionName")
+//    println("ggggg------aarAllVersionName:$aarAllVersionName")
+    if (aarDefaultVersionName != aarAllVersionName) {
+        aarVersionName = aarAllVersionName
+    }
+
     publishing {
         publications {
+//            println("ggggg------$components")
             "[${project.name}]"(MavenPublication) {
                 from components.release// buildTypes的名字
                 groupId = mavenSign.MAVEN_GROUPID//组名
