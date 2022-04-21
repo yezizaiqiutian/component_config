@@ -5,6 +5,10 @@ gradle.ext.rootProjectname = "component_app"
 
 gradle.ext.aar_title = "com.gh.android"
 
+def configFile1 = new File(rootDir.absolutePath.replace("$rootProject.name","component_config/lib_config/components_configs.xml"))
+println(configFile1.getAbsolutePath())
+println(configFile1.getCanonicalPath())
+
 //初始化各个组件配置信息
 def configFile = new File("/Users/gh/Desktop/android/android_projects/Component/component_config/lib_config/components_configs.xml")
 //def configFile = new File("../../component_config/lib_config/components_configs.xml")
